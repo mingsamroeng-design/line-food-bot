@@ -6,14 +6,18 @@ from linebot.v3.messaging import (
     ApiClient,
     MessagingApi,
     ReplyMessageRequest,
-    TextMessage
+    TextMessage,
 )
-from linebot.v3.webhooks import MessageEvent, TextMessageContent
+from linebot.v3.webhooks import (
+    MessageEvent,
+    TextMessageContent,
+)
+from linebot.v3.exceptions import InvalidSignatureError
 
 from config import (
     LINE_CHANNEL_ACCESS_TOKEN,
     LINE_CHANNEL_SECRET,
-    PORT
+    PORT,
 )
 
 app = Flask(__name__)
@@ -42,10 +46,14 @@ def callback():
     body = request.get_data(as_text=True)
 
     try:
-    handler.handle(body, signature)
-except Exception as e:
-    print(e)
-    return "Error", 400
+        handler.handle(body, signature)
+
+    except InvalidSignatureError:
+        return "Invalid signature", 400
+
+    except Exception as e:
+        print(e)
+        return "Internal Server Error", 500
 
     return "OK"
 
@@ -67,7 +75,7 @@ def handle_message(event):
                     TextMessage(
                         text=f"คุณพิมพ์ว่า: {event.message.text}"
                     )
-                ]
+                ],
             )
         )
 
@@ -77,5 +85,5 @@ if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
         port=PORT,
-        debug=True
+        debug=True,
     )
