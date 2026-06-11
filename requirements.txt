@@ -1,0 +1,8 @@
+Flask
+line-bot-sdk>=3.17.1
+gunicorn
+openpyxl
+reportlab
+qrcode
+pillow
+python-dotenv
