@@ -36,6 +36,7 @@ from bill import (
     calculate,
     get_bill,
     reset_bill,
+    undo_bill,
 )
 
 app = Flask(__name__)
@@ -368,7 +369,22 @@ def handle_message(event):
 
         reset_bill(group_id)
 
-        reply = "🗑️ ล้างบิลเรียบร้อย"    
+        reply = "🗑️ ล้างบิลเรียบร้อย"  
+
+    # ======================
+    # Undo
+    # ======================
+    elif text == "/undo":
+
+        success = undo_bill(group_id)
+
+        if success:
+
+            reply = "↩️ ย้อนกลับคำสั่งล่าสุดแล้ว"
+
+        else:
+
+            reply = "❌ ไม่มีข้อมูลให้ย้อนกลับ"      
 
     # ======================
     # Summary
@@ -436,6 +452,7 @@ def handle_message(event):
             "/additem เมนู ราคา คน1,คน2\n"
             "/show\n"
             "/removeitem ชื่อเมนู\n"
+            "/undo\n"
             "/reset\n"
             "/vat 7\n"
             "/service 10\n"

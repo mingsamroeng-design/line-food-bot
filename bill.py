@@ -82,6 +82,8 @@ def calculate(group_id):
 
     db = load_db()
 
+    push_history(group_id)
+
     bill = db[group_id]
 
     result = {}
@@ -153,6 +155,8 @@ def remove_item(group_id, item_name):
 
     if group_id not in db:
         return False
+    
+    push_history(group_id)
 
     bill = db[group_id]
 
@@ -174,6 +178,8 @@ def remove_member(group_id, member_name):
 
     if group_id not in db:
         return False
+    
+    push_history(group_id)
 
     bill = db[group_id]
 
@@ -195,6 +201,35 @@ def remove_member(group_id, member_name):
         for item in bill["items"]
         if len(item["eaters"]) > 0
     ]
+
+    save_db(db)
+
+    return True
+
+def undo_bill(group_id):
+
+    db = load_db()
+
+    if group_id not in db:
+        return False
+    
+    push_history(group_id)
+
+    bill = db[group_id]
+
+    history = bill.get(
+        "_history",
+        []
+    )
+
+    if len(history) == 0:
+        return False
+
+    previous = history.pop()
+
+    previous["_history"] = history
+
+    db[group_id] = previous
 
     save_db(db)
 
