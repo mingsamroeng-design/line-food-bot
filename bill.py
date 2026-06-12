@@ -118,6 +118,18 @@ def calculate(group_id):
 
 def get_bill(group_id):
 
-    bill = create_bill(group_id)
+    db = load_db()
 
-    return bill
+    db.setdefault(
+        group_id,
+        {
+            "members": [],
+            "items": [],
+            "vat": 0,
+            "service": 0
+        }
+    )
+
+    save_db(db)
+
+    return db[group_id]

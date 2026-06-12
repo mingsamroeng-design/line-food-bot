@@ -269,7 +269,7 @@ def handle_message(event):
 
             for item in bill["items"]:
 
-                people = ", ".join(item["members"])
+                people = ", ".join(item["eaters"])
 
                 msg.append(
                     f"• {item['name']} {item['price']:.2f}"
