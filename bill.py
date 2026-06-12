@@ -133,3 +133,16 @@ def get_bill(group_id):
     save_db(db)
 
     return db[group_id]
+
+def reset_bill(group_id):
+
+    db = load_db()
+
+    db[group_id] = {
+        "members": [],
+        "items": [],
+        "vat": 0,
+        "service": 0
+    }
+
+    save_db(db)

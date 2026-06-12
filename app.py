@@ -33,6 +33,7 @@ from bill import (
     set_service,
     calculate,
     get_bill,
+    reset_bill,
 )
 
 app = Flask(__name__)
@@ -288,7 +289,16 @@ def handle_message(event):
             f"Service : {bill['service']}%"
         )
 
-        reply = "\n".join(msg)    
+        reply = "\n".join(msg)
+
+    # ======================
+    # Reset Bill
+    # ======================
+    elif text == "/reset":
+
+        reset_bill(group_id)
+
+        reply = "🗑️ ล้างบิลเรียบร้อย"    
 
     # ======================
     # Summary
