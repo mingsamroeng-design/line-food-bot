@@ -115,3 +115,9 @@ def calculate(group_id):
         result[member] += per_person
 
     return result, subtotal, service, vat
+
+def get_bill(group_id):
+
+    bill = create_bill(group_id)
+
+    return bill

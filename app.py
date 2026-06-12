@@ -32,6 +32,7 @@ from bill import (
     set_vat,
     set_service,
     calculate,
+    get_bill,
 )
 
 app = Flask(__name__)
@@ -234,6 +235,62 @@ def handle_message(event):
         )
 
     # ======================
+    # Show Bill
+    # ======================
+    elif text == "/show":
+
+        bill = get_bill(group_id)
+
+        msg = []
+
+        msg.append("📋 รายการปัจจุบัน")
+        msg.append("")
+
+        msg.append("👥 สมาชิก")
+
+        if len(bill["members"]) == 0:
+
+            msg.append("- ไม่มี")
+
+        else:
+
+            for member in bill["members"]:
+
+                msg.append(f"• {member}")
+
+        msg.append("")
+        msg.append("🍽️ รายการอาหาร")
+
+        if len(bill["items"]) == 0:
+
+            msg.append("- ไม่มี")
+
+        else:
+
+            for item in bill["items"]:
+
+                people = ", ".join(item["members"])
+
+                msg.append(
+                    f"• {item['name']} {item['price']:.2f}"
+                )
+
+                msg.append(
+                    f"   👥 {people}"
+                )
+
+        msg.append("")
+        msg.append(
+            f"VAT : {bill['vat']}%"
+        )
+
+        msg.append(
+            f"Service : {bill['service']}%"
+        )
+
+        reply = "\n".join(msg)    
+
+    # ======================
     # Summary
     # ======================
     elif text == "/summary":
@@ -296,6 +353,7 @@ def handle_message(event):
             "/new\n"
             "/addmember ชื่อ\n"
             "/additem เมนู ราคา คน1,คน2\n"
+            "/show\n"
             "/vat 7\n"
             "/service 10\n"
             "/summary"
