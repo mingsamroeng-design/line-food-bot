@@ -146,3 +146,24 @@ def reset_bill(group_id):
     }
 
     save_db(db)
+
+def remove_item(group_id, item_name):
+
+    db = load_db()
+
+    if group_id not in db:
+        return False
+
+    bill = db[group_id]
+
+    old_count = len(bill["items"])
+
+    bill["items"] = [
+        item
+        for item in bill["items"]
+        if item["name"] != item_name
+    ]
+
+    save_db(db)
+
+    return len(bill["items"]) != old_count

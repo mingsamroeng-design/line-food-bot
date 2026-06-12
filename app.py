@@ -29,6 +29,7 @@ from bill import (
     create_bill,
     add_member,
     add_item,
+    remove_item,
     set_vat,
     set_service,
     calculate,
@@ -192,6 +193,40 @@ def handle_message(event):
             except ValueError:
 
                 reply = "ราคาไม่ถูกต้อง"
+
+    # ======================
+    # Remove Item
+    # ======================
+    elif text.startswith("/removeitem"):
+
+        item_name = (
+            text
+            .replace("/removeitem", "")
+            .strip()
+        )
+
+        if item_name == "":
+
+            reply = "กรุณาระบุชื่อเมนู"
+
+        else:
+
+            success = remove_item(
+                group_id,
+                item_name
+            )
+
+            if success:
+
+                reply = (
+                    f"🗑️ ลบรายการ {item_name} เรียบร้อย"
+                )
+
+            else:
+
+                reply = (
+                    f"❌ ไม่พบรายการ {item_name}"
+                )
 
     # ======================
     # VAT
@@ -364,6 +399,8 @@ def handle_message(event):
             "/addmember ชื่อ\n"
             "/additem เมนู ราคา คน1,คน2\n"
             "/show\n"
+            "/removeitem ชื่อเมนู\n"
+            "/reset\n"
             "/vat 7\n"
             "/service 10\n"
             "/summary"
