@@ -28,6 +28,7 @@ from config import (
 from bill import (
     create_bill,
     add_member,
+    remove_member,
     add_item,
     remove_item,
     set_vat,
@@ -144,6 +145,40 @@ def handle_message(event):
             )
 
             reply = f"✅ เพิ่มสมาชิก {name}"
+
+    # ======================
+    # Remove Member
+    # ======================
+    elif text.startswith("/removemember"):
+
+        member_name = (
+            text
+            .replace("/removemember", "")
+            .strip()
+        )
+
+        if member_name == "":
+
+            reply = "กรุณาระบุชื่อสมาชิก"
+
+        else:
+
+            success = remove_member(
+                group_id,
+                member_name
+            )
+
+            if success:
+
+                reply = (
+                    f"🗑️ ลบสมาชิก {member_name} เรียบร้อย"
+                )
+
+            else:
+
+                reply = (
+                    f"❌ ไม่พบสมาชิก {member_name}"
+                )        
 
     # ======================
     # เพิ่มรายการอาหาร
@@ -397,6 +432,7 @@ def handle_message(event):
             "📋 คำสั่งที่รองรับ\n\n"
             "/new\n"
             "/addmember ชื่อ\n"
+            "/removemember ชื่อ\n"
             "/additem เมนู ราคา คน1,คน2\n"
             "/show\n"
             "/removeitem ชื่อเมนู\n"

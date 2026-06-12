@@ -167,3 +167,35 @@ def remove_item(group_id, item_name):
     save_db(db)
 
     return len(bill["items"]) != old_count
+
+def remove_member(group_id, member_name):
+
+    db = load_db()
+
+    if group_id not in db:
+        return False
+
+    bill = db[group_id]
+
+    # ลบสมาชิกออกจากรายชื่อ
+    if member_name in bill["members"]:
+        bill["members"].remove(member_name)
+    else:
+        return False
+
+    # ลบสมาชิกออกจากรายการอาหารทุกเมนู
+    for item in bill["items"]:
+
+        if member_name in item["eaters"]:
+            item["eaters"].remove(member_name)
+
+    # ถ้าเมนูไหนไม่มีคนกินแล้ว ให้ลบเมนูนั้นทิ้ง
+    bill["items"] = [
+        item
+        for item in bill["items"]
+        if len(item["eaters"]) > 0
+    ]
+
+    save_db(db)
+
+    return True
