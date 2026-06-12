@@ -107,7 +107,7 @@ def calculate(group_id):
     extra = service + vat
 
     if len(bill["members"]) == 0:
-    return {}, subtotal, service, vat
+        return {}, subtotal, service, vat
 
     per_person = extra / len(bill["members"])
 
