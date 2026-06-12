@@ -1,6 +1,13 @@
-from database import load_db, save_db
+from database import (
+    load_db,
+    save_db,
+    push_history,
+)
 
 
+# ==========================
+# Create Bill
+# ==========================
 def create_bill(group_id):
 
     db = load_db()
@@ -9,58 +16,222 @@ def create_bill(group_id):
         "members": [],
         "items": [],
         "vat": 0,
-        "service": 0
+        "service": 0,
+        "_history": [],
     }
 
     save_db(db)
 
 
-def add_member(group_id, name):
+# ==========================
+# Reset Bill
+# ==========================
+def reset_bill(group_id):
 
     db = load_db()
 
-    db.setdefault(
-        group_id,
-        {
-            "members": [],
-            "items": [],
-            "vat": 0,
-            "service": 0
-        }
-    )
+    if group_id not in db:
+        return
 
-    if name not in db[group_id]["members"]:
-        db[group_id]["members"].append(name)
+    push_history(group_id)
+
+    db = load_db()
+
+    db[group_id]["members"] = []
+
+    db[group_id]["items"] = []
+
+    db[group_id]["vat"] = 0
+
+    db[group_id]["service"] = 0
 
     save_db(db)
 
 
-def add_item(group_id, name, price, eaters):
+# ==========================
+# Get Bill
+# ==========================
+def get_bill(group_id):
 
     db = load_db()
 
-    db.setdefault(
-        group_id,
-        {
-            "members": [],
-            "items": [],
-            "vat": 0,
-            "service": 0
-        }
-    )
+    if group_id not in db:
 
-    db[group_id]["items"].append(
+        create_bill(group_id)
+
+        db = load_db()
+
+    return db[group_id]
+
+
+# ==========================
+# Add Member
+# ==========================
+def add_member(group_id, member_name):
+
+    db = load_db()
+
+    if group_id not in db:
+        create_bill(group_id)
+        db = load_db()
+
+    push_history(group_id)
+
+    db = load_db()
+
+    bill = db[group_id]
+
+    if member_name not in bill["members"]:
+
+        bill["members"].append(member_name)
+
+        save_db(db)
+
+
+# ==========================
+# Remove Member
+# ==========================
+def remove_member(group_id, member_name):
+
+    db = load_db()
+
+    if group_id not in db:
+        return False
+
+    if member_name not in db[group_id]["members"]:
+        return False
+
+    push_history(group_id)
+
+    db = load_db()
+
+    bill = db[group_id]
+
+    bill["members"].remove(member_name)
+
+    # ลบชื่อออกจากรายการอาหาร
+    for item in bill["items"]:
+
+        if member_name in item["eaters"]:
+
+            item["eaters"].remove(member_name)
+
+    # ลบเมนูที่ไม่มีคนกิน
+    bill["items"] = [
+
+        item
+
+        for item in bill["items"]
+
+        if len(item["eaters"]) > 0
+
+    ]
+
+    save_db(db)
+
+    return True
+
+
+# ==========================
+# Add Item
+# ==========================
+def add_item(
+    group_id,
+    item_name,
+    price,
+    eaters,
+):
+
+    db = load_db()
+
+    if group_id not in db:
+        create_bill(group_id)
+        db = load_db()
+
+    push_history(group_id)
+
+    db = load_db()
+
+    bill = db[group_id]
+
+    bill["items"].append(
+
         {
-            "name": name,
+
+            "name": item_name,
+
             "price": float(price),
-            "eaters": eaters
+
+            "eaters": list(eaters),
+
         }
+
     )
 
     save_db(db)
 
 
+# ==========================
+# Remove Item
+# ==========================
+def remove_item(
+    group_id,
+    item_name,
+):
+
+    db = load_db()
+
+    if group_id not in db:
+        return False
+
+    bill = db[group_id]
+
+    found = False
+
+    for item in bill["items"]:
+
+        if item["name"] == item_name:
+
+            found = True
+
+            break
+
+    if not found:
+        return False
+
+    push_history(group_id)
+
+    db = load_db()
+
+    bill = db[group_id]
+
+    bill["items"] = [
+
+        item
+
+        for item in bill["items"]
+
+        if item["name"] != item_name
+
+    ]
+
+    save_db(db)
+
+    return True
+
+
+# ==========================
+# Set VAT
+# ==========================
 def set_vat(group_id, percent):
+
+    db = load_db()
+
+    if group_id not in db:
+        create_bill(group_id)
+        db = load_db()
+
+    push_history(group_id)
 
     db = load_db()
 
@@ -69,7 +240,18 @@ def set_vat(group_id, percent):
     save_db(db)
 
 
+# ==========================
+# Set Service
+# ==========================
 def set_service(group_id, percent):
+
+    db = load_db()
+
+    if group_id not in db:
+        create_bill(group_id)
+        db = load_db()
+
+    push_history(group_id)
 
     db = load_db()
 
@@ -78,142 +260,88 @@ def set_service(group_id, percent):
     save_db(db)
 
 
+# ==========================
+# Calculate
+# ==========================
 def calculate(group_id):
 
     db = load_db()
 
-    push_history(group_id)
+    if group_id not in db:
+        return {}, 0, 0, 0
 
     bill = db[group_id]
+
+    members = bill["members"]
 
     result = {}
 
-    subtotal = 0
+    for member in members:
+        result[member] = 0.0
 
-    for member in bill["members"]:
-        result[member] = 0
+    subtotal = 0.0
 
     for item in bill["items"]:
 
-        subtotal += item["price"]
+        price = float(item["price"])
 
-        share = item["price"] / len(item["eaters"])
+        eaters = item["eaters"]
 
-        for eater in item["eaters"]:
-            result[eater] += share
+        subtotal += price
 
-    service = subtotal * bill["service"] / 100
+        if len(eaters) == 0:
+            continue
 
-    vat = (subtotal + service) * bill["vat"] / 100
+        share = price / len(eaters)
 
-    extra = service + vat
+        for person in eaters:
 
-    if len(bill["members"]) == 0:
-        return {}, subtotal, service, vat
+            if person not in result:
+                result[person] = 0.0
 
-    per_person = extra / len(bill["members"])
+            result[person] += share
 
-    for member in bill["members"]:
-        result[member] += per_person
-
-    return result, subtotal, service, vat
-
-def get_bill(group_id):
-
-    db = load_db()
-
-    db.setdefault(
-        group_id,
-        {
-            "members": [],
-            "items": [],
-            "vat": 0,
-            "service": 0
-        }
+    service = (
+        subtotal
+        * bill["service"]
+        / 100
     )
 
-    save_db(db)
+    vat = (
+        (subtotal + service)
+        * bill["vat"]
+        / 100
+    )
 
-    return db[group_id]
+    total_extra = service + vat
 
-def reset_bill(group_id):
+    if subtotal > 0:
 
-    db = load_db()
+        ratio = total_extra / subtotal
 
-    db[group_id] = {
-        "members": [],
-        "items": [],
-        "vat": 0,
-        "service": 0
-    }
+        for person in result:
 
-    save_db(db)
+            result[person] *= (
+                1 + ratio
+            )
 
-def remove_item(group_id, item_name):
+    return (
+        result,
+        subtotal,
+        service,
+        vat,
+    )
 
-    db = load_db()
 
-    if group_id not in db:
-        return False
-    
-    push_history(group_id)
-
-    bill = db[group_id]
-
-    old_count = len(bill["items"])
-
-    bill["items"] = [
-        item
-        for item in bill["items"]
-        if item["name"] != item_name
-    ]
-
-    save_db(db)
-
-    return len(bill["items"]) != old_count
-
-def remove_member(group_id, member_name):
-
-    db = load_db()
-
-    if group_id not in db:
-        return False
-    
-    push_history(group_id)
-
-    bill = db[group_id]
-
-    # ลบสมาชิกออกจากรายชื่อ
-    if member_name in bill["members"]:
-        bill["members"].remove(member_name)
-    else:
-        return False
-
-    # ลบสมาชิกออกจากรายการอาหารทุกเมนู
-    for item in bill["items"]:
-
-        if member_name in item["eaters"]:
-            item["eaters"].remove(member_name)
-
-    # ถ้าเมนูไหนไม่มีคนกินแล้ว ให้ลบเมนูนั้นทิ้ง
-    bill["items"] = [
-        item
-        for item in bill["items"]
-        if len(item["eaters"]) > 0
-    ]
-
-    save_db(db)
-
-    return True
-
+# ==========================
+# Multi-Level Undo
+# ==========================
 def undo_bill(group_id):
 
     db = load_db()
 
     if group_id not in db:
         return False
-    
-    push_history(group_id)
 
     bill = db[group_id]
 
@@ -227,6 +355,7 @@ def undo_bill(group_id):
 
     previous = history.pop()
 
+    # เก็บ history ที่เหลือไว้
     previous["_history"] = history
 
     db[group_id] = previous
